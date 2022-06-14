@@ -1,0 +1,112 @@
+// DlgEncryptTab.cpp : 구현 파일입니다.
+//
+
+#include "stdafx.h"
+#include "AES_Project.h"
+#include "DlgEncryptTab.h"
+#include "afxdialogex.h"
+
+
+// CDlgEncryptTab 대화 상자입니다.
+
+IMPLEMENT_DYNAMIC(CDlgEncryptTab, CDialogEx)
+
+CDlgEncryptTab::CDlgEncryptTab(CWnd* pParent /*=NULL*/)
+	: CDialogEx(CDlgEncryptTab::IDD, pParent)
+{
+    SetBackgroundColor(RGB(255, 255, 255));
+}
+
+CDlgEncryptTab::~CDlgEncryptTab()
+{
+}
+
+void CDlgEncryptTab::DoDataExchange(CDataExchange* pDX)
+{
+    CDialogEx::DoDataExchange(pDX);
+    DDX_Control(pDX, IDC_ENCRYPT_FILE_PATH, m_encryptFilePath);
+    DDX_Control(pDX, IDC_PLAINTEXT, m_encryptPlainTxt);
+    DDX_Control(pDX, IDC_ENCRYPT_RESULT, m_encryptResultTxt);
+}
+
+
+BEGIN_MESSAGE_MAP(CDlgEncryptTab, CDialogEx)
+    ON_EN_CHANGE(IDC_PLAINTEXT, &CDlgEncryptTab::OnEnChangePlaintext)
+    ON_EN_CHANGE(IDC_ENCRYPT_RESULT, &CDlgEncryptTab::OnEnChangeDecryptResult)
+    ON_BN_CLICKED(IDC_ENCRYPT, &CDlgEncryptTab::OnBnClickedEncrypt)
+    ON_BN_CLICKED(IDC_ENCRYPT_FILE_BTN, &CDlgEncryptTab::OnBnClickedEncryptFileBtn)
+END_MESSAGE_MAP()
+
+
+// CDlgEncryptTab 메시지 처리기입니다.
+BOOL CDlgEncryptTab::PreTranslateMessage(MSG* pMsg)
+{
+    if (pMsg->message == WM_KEYDOWN)
+    {
+        if (pMsg->wParam == VK_ESCAPE)
+            return TRUE;
+        // 텍스트 전체 선택
+        else if (pMsg->wParam == 'A' && GetKeyState(VK_CONTROL) < 0)
+        {
+            CWnd *pWnd = GetFocus();
+            if (pWnd)
+            {
+                if (pWnd == GetDlgItem(IDC_PLAINTEXT) || pWnd == GetDlgItem(IDC_ENCRYPT_RESULT))
+                {
+                    ((CEdit*)pWnd)->SetSel(0, -1);
+                }
+            }
+        }
+    }
+    return CDialog::PreTranslateMessage(pMsg);
+}
+
+
+// 암호화 파일 열기
+void CDlgEncryptTab::OnBnClickedEncryptFileBtn()
+{
+    // 파일 열기 다이얼로그
+    TCHAR szFilter[] = _T("Image (*.BMP, *.GIF, *.JPG) | *.BMP;*.GIF;*.JPG | All Files(*.*)|*.*||");
+    CFileDialog dlg(TRUE, NULL, NULL, OFN_HIDEREADONLY, szFilter);
+    if (IDOK == dlg.DoModal()) {
+        CString strPathName = dlg.GetPathName();
+        m_encryptFilePath.SetWindowTextW(strPathName);
+    }
+}
+
+
+// 암호화 하기 버튼 클릭
+void CDlgEncryptTab::OnBnClickedEncrypt()
+{
+    // TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
+
+    // 텍스트인지 파일인지 구분
+    const string sText = "Plain Text";
+    string sEnc, sDec;
+
+    byte KEY[CryptoPP::AES::DEFAULT_KEYLENGTH] = { 0, };
+    byte IV[CryptoPP::AES::BLOCKSIZE] = { 0x01, };
+
+}
+
+
+void CDlgEncryptTab::OnEnChangePlaintext()
+{
+    // TODO:  RICHEDIT 컨트롤인 경우, 이 컨트롤은
+    // CDialogEx::OnInitDialog() 함수를 재지정 
+    //하고 마스크에 OR 연산하여 설정된 ENM_CHANGE 플래그를 지정하여 CRichEditCtrl().SetEventMask()를 호출하지 않으면
+    // 이 알림 메시지를 보내지 않습니다.
+
+    // TODO:  여기에 컨트롤 알림 처리기 코드를 추가합니다.
+}
+
+
+void CDlgEncryptTab::OnEnChangeDecryptResult()
+{
+    // TODO:  RICHEDIT 컨트롤인 경우, 이 컨트롤은
+    // CDialogEx::OnInitDialog() 함수를 재지정 
+    //하고 마스크에 OR 연산하여 설정된 ENM_CHANGE 플래그를 지정하여 CRichEditCtrl().SetEventMask()를 호출하지 않으면
+    // 이 알림 메시지를 보내지 않습니다.
+
+    // TODO:  여기에 컨트롤 알림 처리기 코드를 추가합니다.
+}
