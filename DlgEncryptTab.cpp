@@ -68,7 +68,8 @@ void CDlgEncryptTab::OnBnClickedEncryptFileBtn()
     // 파일 열기 다이얼로그
     TCHAR szFilter[] = _T("Image (*.BMP, *.GIF, *.JPG) | *.BMP;*.GIF;*.JPG | All Files(*.*)|*.*||");
     CFileDialog dlg(TRUE, NULL, NULL, OFN_HIDEREADONLY, szFilter);
-    if (IDOK == dlg.DoModal()) {
+    if (IDOK == dlg.DoModal()) 
+    {
         CString strPathName = dlg.GetPathName();
         m_encryptFilePath.SetWindowTextW(strPathName);
     }
@@ -81,12 +82,16 @@ void CDlgEncryptTab::OnBnClickedEncrypt()
     // TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
 
     // 텍스트인지 파일인지 구분
-    const string sText = "Plain Text";
-    string sEnc, sDec;
+    OutputDebugString(_T("버튼 동작 시작\n"));
 
-    byte KEY[CryptoPP::AES::DEFAULT_KEYLENGTH] = { 0, };
-    byte IV[CryptoPP::AES::BLOCKSIZE] = { 0x01, };
-
+    CAES_Module *tmd = new CAES_Module();
+    tmd->Test<CryptoPP::AES>();
+    /*
+    CString str;
+    GetDlgItemText(IDC_PLAINTEXT, str);
+    OutputDebugString(str);
+    */
+    AfxMessageBox(_T("Encrypted"));
 }
 
 
