@@ -27,6 +27,8 @@ void CDlgEncryptTab::DoDataExchange(CDataExchange* pDX)
     DDX_Control(pDX, IDC_ENCRYPT_FILE_PATH, m_encryptFilePath);
     DDX_Control(pDX, IDC_PLAINTEXT, m_encryptPlainTxt);
     DDX_Control(pDX, IDC_ENCRYPT_RESULT, m_encryptResultTxt);
+    DDX_Control(pDX, IDC_COMBO_ENCRYPT_MODE, m_comboEncModeList);
+    DDX_Control(pDX, IDC_COMBO_ENCRYPT_PADDING, m_comboEncPadding);
 }
 
 
@@ -45,7 +47,7 @@ BOOL CDlgEncryptTab::PreTranslateMessage(MSG* pMsg)
     {
         if (pMsg->wParam == VK_ESCAPE)
             return TRUE;
-        // 텍스트 전체 선택
+        // 텍스트 전체 선택 (ctrl + A)
         else if (pMsg->wParam == 'A' && GetKeyState(VK_CONTROL) < 0)
         {
             CWnd *pWnd = GetFocus();
@@ -81,16 +83,32 @@ void CDlgEncryptTab::OnBnClickedEncrypt()
 {
     // TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
 
-    // 텍스트인지 파일인지 구분
     OutputDebugString(_T("버튼 동작 시작\n"));
 
-    CAES_Module *tmd = new CAES_Module();
-    tmd->Test<CryptoPP::AES>();
-    /*
+    // 텍스트인지 파일인지 구분
+
+    // 모드, 패딩 설정 값 가져오기
+    // 선택한 모드
+    CString modSelected;
+    m_comboEncModeList.GetLBText(m_comboEncModeList.GetCurSel(), modSelected);
+
+    CString padSelected;
+    m_comboEncPadding.GetLBText(m_comboEncPadding.GetCurSel(), padSelected);
+
+    // input에 입력한 문자열
     CString str;
     GetDlgItemText(IDC_PLAINTEXT, str);
-    OutputDebugString(str);
-    */
+
+    //CAES_Module *tmd = new CAES_Module();
+    //tmd->Test<CryptoPP::AES>(str);
+    CString result;
+
+    CAES_Module *tmd2 = new CAES_Module();
+    result = tmd2->testEncyp<CryptoPP::AES>(str, modSelected, tmd2->GetPaddingSch(padSelected)).c_str();
+
+    CEdit *p = (CEdit *)GetDlgItem(IDC_ENCRYPT_RESULT);
+    p->SetWindowText(result);
+
     AfxMessageBox(_T("Encrypted"));
 }
 
@@ -114,4 +132,29 @@ void CDlgEncryptTab::OnEnChangeDecryptResult()
     // 이 알림 메시지를 보내지 않습니다.
 
     // TODO:  여기에 컨트롤 알림 처리기 코드를 추가합니다.
+}
+
+
+BOOL CDlgEncryptTab::OnInitDialog()
+{
+    CDialogEx::OnInitDialog();
+
+    // TODO:  여기에 추가 초기화 작업을 추가합니다.
+
+    // 모드 콤보 박스
+    m_comboEncModeList.AddString(_T("ECB"));
+    m_comboEncModeList.AddString(_T("CBC"));
+    m_comboEncModeList.SetCurSel(0);
+
+    // 패딩 콤보 박스
+    m_comboEncPadding.AddString(_T("NO_PADDING"));
+    m_comboEncPadding.AddString(_T("ZEROS_PADDING"));
+    m_comboEncPadding.AddString(_T("PKCS_PADDING"));
+    m_comboEncPadding.AddString(_T("ONE_AND_ZEROS_PADDING"));
+    m_comboEncPadding.AddString(_T("DEFAULT_PADDING"));
+    m_comboEncPadding.SetCurSel(0);
+
+
+    return TRUE;  // return TRUE unless you set the focus to a control
+    // 예외: OCX 속성 페이지는 FALSE를 반환해야 합니다.
 }

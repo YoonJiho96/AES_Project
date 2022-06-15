@@ -29,4 +29,7 @@ public:
     CEdit m_encryptFilePath;        // 파일 열기
     CEdit m_encryptPlainTxt;        // 입력한 평문
     CEdit m_encryptResultTxt;       // 암호화 결과
+    CComboBox m_comboEncModeList;
+    virtual BOOL OnInitDialog();
+    CComboBox m_comboEncPadding;
 };

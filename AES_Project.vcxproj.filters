@@ -59,9 +59,6 @@
     <ClCompile Include="DlgDecryptTab.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="AES_Module.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="AES_Project.rc">
