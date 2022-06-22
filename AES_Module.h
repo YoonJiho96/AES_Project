@@ -11,6 +11,8 @@ using namespace std;
 #include "modes.h"
 #include "filters.h"
 
+#include <cstring>
+
 //#pragma comment(lib, "cryptlib")
 //#pragma comment(lib, "cryptopp")        // dll 암시적 링킹
 
@@ -19,29 +21,7 @@ using namespace std;
 class CAES_Module
 {
 public:
-    /*
-    CAES_Module();
-    ~CAES_Module();
-
-    template <class TyMode>
-    string Encrypt(TyMode &Encryptor, const string &PlainText){};
-    template <class TyMode>
-    string Decrypt(TyMode &Decryptor, const string &EncodedText){};
-
-    template <class Ty>
-    string CBC_Encrypt(byte *KEY, byte *IV, const string &PlainText){};
-    template <class Ty>
-    std::string CBC_Decrypt(byte *KEY, byte *IV, const std::string &PlainText){};
-    template <class Ty>
-    std::string ECB_Encrypt(byte *KEY, const std::string &PlainText){};
-    template <class Ty>
-    std::string ECB_Decrypt(byte *KEY, const std::string &PlainText){};
-
-    template <class CryptoType>
-    void Test(){};
-
-    void test2(){ OutputDebugString(_T("테스트2\n")); }
-    */
+    string strResult;
 
     CAES_Module::CAES_Module()
     {
@@ -51,48 +31,65 @@ public:
 
     CAES_Module::~CAES_Module()
     {
+        OutputDebugString(_T("객체제거\n"));
     }
 
+    // ----- 암호화 템플릿 ----- //
     template <class TyMode>
     string Encrypt(TyMode &Encryptor, const string &PlainText)
     {
         OutputDebugString(_T("암호화\n"));
 
-        string EncodedText;
+        // DLL 내에서 해제되도록 설정
+        string *EncodedText = new string();
 
         try
         {
+            // 일괄 동작
+            /*
             CryptoPP::StringSource(PlainText, true,
                 new CryptoPP::StreamTransformationFilter(Encryptor,
                     new CryptoPP::Base64Encoder(new CryptoPP::StringSink(EncodedText), false), 
                     CryptoPP::BlockPaddingSchemeDef::ZEROS_PADDING
                     )
                     );
+            */
+            
+            // 모듈 개별 생성으로 변경
+            CryptoPP::StringSink *strSnk = new CryptoPP::StringSink(*EncodedText);
+            CryptoPP::Base64Encoder *bs = new CryptoPP::Base64Encoder(strSnk, false);
+
+            CryptoPP::BlockPaddingSchemeDef::BlockPaddingScheme paddingType = CryptoPP::BlockPaddingSchemeDef::ZEROS_PADDING;
+
+            CryptoPP::StreamTransformationFilter *stf = new CryptoPP::StreamTransformationFilter(Encryptor, bs, paddingType);
+            CryptoPP::StringSource strSrc = new CryptoPP::StringSource(PlainText, true, stf);
         }
         catch (...)
         {
         }
 
         char buff1[100];
-        sprintf(buff1, "암호 결과 : %s\n", EncodedText);
+        sprintf(buff1, "암호 결과 : %s\n", *EncodedText);
         OutputDebugStringA(buff1);
 
-        return EncodedText;
+        strResult = *EncodedText;
+        return *EncodedText;
     }
 
+    // ----- 복호화 템플릿 ------ //
     template <class TyMode>
     string Decrypt(TyMode &Decryptor, const string &EncodedText)
     {
         OutputDebugString(_T("복호화\n"));
 
-        string recoveredText;
+        string *recoveredText = new string();
 
         try
         {
             CryptoPP::StringSource(EncodedText, true,
                 new CryptoPP::Base64Decoder(
                 new CryptoPP::StreamTransformationFilter(Decryptor,
-                new CryptoPP::StringSink(recoveredText),
+                new CryptoPP::StringSink(*recoveredText),
                 CryptoPP::BlockPaddingSchemeDef::ZEROS_PADDING
                 )
                 )
@@ -102,79 +99,57 @@ public:
         {
         }
 
-        char buff[100];
-        sprintf(buff, "복호 결과 : %s\n", recoveredText);
-        OutputDebugStringA(buff);
-        return recoveredText;
+        char buff_dec[100];
+        sprintf(buff_dec, "복호 결과 : %s\n", *recoveredText);
+        OutputDebugStringA(buff_dec);
+
+        return *recoveredText;
     }
 
-    // 각 모드 별 암호/복호 (CBC, ECB)
+    // ------- CBC 모드 -------- //
+    // CBC 모드 암호화
     template <class Ty>
     string CBC_Encrypt(byte *KEY, byte *IV, const string &PlainText)
     {
         OutputDebugString(_T("CBC_Encrypt Start\n"));
-       // typename CryptoPP::CBC_Mode<Ty>::Encryption Encryptor(KEY, Ty::DEFAULT_KEYLENGTH, IV);
 
         typename CryptoPP::CBC_Mode<Ty>::Encryption Encryptor;
         Encryptor.SetKeyWithIV(KEY, Ty::DEFAULT_KEYLENGTH, IV);
         return Encrypt(Encryptor, PlainText);
     }
-
+    // CBC 모드 복호화
     template <class Ty>
-    std::string CBC_Decrypt(byte *KEY, byte *IV, const std::string &PlainText)
+    string CBC_Decrypt(byte *KEY, byte *IV, const std::string &PlainText)
     {
         OutputDebugString(_T("CBC_Decrypt Start\n"));
+        
         typename CryptoPP::CBC_Mode<Ty>::Decryption Decryptor(KEY, Ty::DEFAULT_KEYLENGTH, IV);
         return Decrypt(Decryptor, PlainText);
     }
 
+
+    // ------- ECB 모드 --------- //
+    // ECB 모드 암호화
     template <class Ty>
-    std::string ECB_Encrypt(byte *KEY, const std::string &PlainText)
+    string ECB_Encrypt(byte *KEY, const std::string &PlainText)
     {
+        OutputDebugString(_T("ECB_Encrypt Start\n"));
+
         typename CryptoPP::ECB_Mode<Ty>::Encryption Encryptor(KEY, Ty::DEFAULT_KEYLENGTH);
         return Encrypt(Encryptor, PlainText);
     }
-
+    // ECB 모드 복호화
     template <class Ty>
-    std::string ECB_Decrypt(byte *KEY, const std::string &PlainText)
+    string ECB_Decrypt(byte *KEY, const std::string &PlainText)
     {
+        OutputDebugString(_T("ECB_Decrypt Start\n"));
+
         typename CryptoPP::ECB_Mode<Ty>::Decryption Decryptor(KEY, Ty::DEFAULT_KEYLENGTH);
         return Decrypt(Decryptor, PlainText);
     }
 
-    // 테스트 함수
-    template <class CryptoType>
-    void Test(CString inputStr)
-    {
-        OutputDebugString(_T("테스트실행\n"));
-        string sText;
-        if (inputStr != "")
-            sText = string(CT2CA(inputStr));
-        else
-            sText = "Plain Text";
 
-        string sEnc, sDec;
-
-        byte KEY[CryptoType::DEFAULT_KEYLENGTH] = { 0, };
-        byte IV[CryptoType::BLOCKSIZE] = { 0x01, };
-
-        // CBC 모드
-        sEnc = CBC_Encrypt<CryptoType>(KEY, IV, sText);
-        sDec = CBC_Decrypt<CryptoType>(KEY, IV, sEnc);
-
-        //cout << CryptoType::StaticAlgorithmName() << " : " << "CBC_MODE" << endl;
-        //cout << sText << "\n -> " << sEnc << "\n -> " << sDec << endl;
-
-        // ECB 모드
-        //sEnc = ECB_Encrypt<CryptoType>(KEY, sText);
-        //sDec = ECB_Decrypt<CryptoType>(KEY, sEnc);
-
-        //cout << CryptoType::StaticAlgorithmName() << " : " << "ECB_MODE" << endl;
-       // cout << sText << "\n -> " << sEnc << "\n -> " << sDec << endl;
-        //cout << endl;
-    }
-
-    // 패딩 모드 리턴
+    // ------- 패딩 모드 리턴 ---------- //
     CryptoPP::BlockPaddingSchemeDef::BlockPaddingScheme GetPaddingSch(CString selected)
     {
         if (selected == "NO_PADDING")
@@ -189,9 +164,10 @@ public:
             return CryptoPP::BlockPaddingSchemeDef::DEFAULT_PADDING;
     }
 
+
     // 모드, 패딩 정보 포함한 동작
     template <class CryptoType>
-    string testEncyp(CString inputStr, CString mod, CryptoPP::BlockPaddingSchemeDef::BlockPaddingScheme pad)
+    void testEncyp(CString inputStr, CString mod, CryptoPP::BlockPaddingSchemeDef::BlockPaddingScheme pad)
     {
         string sText;
         if (inputStr != "")
@@ -202,7 +178,10 @@ public:
         string sEnc, sDec;
 
         byte KEY[CryptoType::DEFAULT_KEYLENGTH] = { 0, };
+        // byte KEY[CryptoType::DEFAULT_KEYLENGTH] = "abcdefg";
         byte IV[CryptoType::BLOCKSIZE] = { 0x01, };
+
+        CString strt(KEY);      // byte to CString
 
         if (mod == "ECB")
         {
@@ -216,7 +195,9 @@ public:
             sEnc = CBC_Encrypt<CryptoType>(KEY, IV, sText);
             sDec = CBC_Decrypt<CryptoType>(KEY, IV, sEnc);
         }
-
-        return sEnc;
+        
+        // strResult = sEnc.c_str();
+        
+        // return sEnc;
     }
 };

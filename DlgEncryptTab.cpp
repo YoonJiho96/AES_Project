@@ -87,29 +87,7 @@ void CDlgEncryptTab::OnBnClickedEncrypt()
 
     // 텍스트인지 파일인지 구분
 
-    // 모드, 패딩 설정 값 가져오기
-    // 선택한 모드
-    CString modSelected;
-    m_comboEncModeList.GetLBText(m_comboEncModeList.GetCurSel(), modSelected);
-
-    CString padSelected;
-    m_comboEncPadding.GetLBText(m_comboEncPadding.GetCurSel(), padSelected);
-
-    // input에 입력한 문자열
-    CString str;
-    GetDlgItemText(IDC_PLAINTEXT, str);
-
-    //CAES_Module *tmd = new CAES_Module();
-    //tmd->Test<CryptoPP::AES>(str);
-    CString result;
-
-    CAES_Module *tmd2 = new CAES_Module();
-    result = tmd2->testEncyp<CryptoPP::AES>(str, modSelected, tmd2->GetPaddingSch(padSelected)).c_str();
-
-    CEdit *p = (CEdit *)GetDlgItem(IDC_ENCRYPT_RESULT);
-    p->SetWindowText(result);
-
-    AfxMessageBox(_T("Encrypted"));
+    DoEncrypt();
 }
 
 
@@ -157,4 +135,45 @@ BOOL CDlgEncryptTab::OnInitDialog()
 
     return TRUE;  // return TRUE unless you set the focus to a control
     // 예외: OCX 속성 페이지는 FALSE를 반환해야 합니다.
+}
+
+
+void CDlgEncryptTab::DoEncrypt()
+{
+    // 모드, 패딩 설정 값 가져오기
+    // 선택한 모드
+    CString modSelected;
+    m_comboEncModeList.GetLBText(m_comboEncModeList.GetCurSel(), modSelected);
+
+    CString padSelected;
+    m_comboEncPadding.GetLBText(m_comboEncPadding.GetCurSel(), padSelected);
+
+    // input에 입력한 문자열
+    CString str;
+    GetDlgItemText(IDC_PLAINTEXT, str);
+
+    //CAES_Module *tmd = new CAES_Module();
+    //tmd->Test<CryptoPP::AES>(str);
+    CString result;
+
+    // ------- 암호화 동작 실행 -------- //
+    // 모듈 함수 실행
+    CAES_Module *tmd2 = new CAES_Module();
+
+    // 리턴 있는 버전
+    // result = ((new CAES_Module)->testEncyp2(str, modSelected, ((new CAES_Module)->GetPaddingSch(padSelected)))).c_str();
+    // 리턴 없는 버전
+    tmd2->testEncyp<CryptoPP::AES>(str, modSelected, tmd2->GetPaddingSch(padSelected));
+
+    // 결과 받기
+    result = tmd2->strResult.c_str();
+    // -------- 암호화 종료 --------- // 
+
+
+    // ---------- 결과 출력 ------------- //
+    // 암호문 결과 출력
+    CEdit *p = (CEdit *)GetDlgItem(IDC_ENCRYPT_RESULT);
+    p->SetWindowText(result);
+
+    AfxMessageBox(_T("Encrypted"));
 }

@@ -12,7 +12,7 @@ public:
 	CDlgEncryptTab(CWnd* pParent = NULL);   // 표준 생성자입니다.
 	virtual ~CDlgEncryptTab();
     virtual BOOL PreTranslateMessage(MSG* pMsg);
-
+    
 // 대화 상자 데이터입니다.
 	enum { IDD = IDD_DIALOG_ENCRYPT };
 
@@ -32,4 +32,6 @@ public:
     CComboBox m_comboEncModeList;
     virtual BOOL OnInitDialog();
     CComboBox m_comboEncPadding;
+    void CDlgEncryptTab::DoEncrypt();
+    CString GetInputStr();
 };
