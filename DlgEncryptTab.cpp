@@ -37,6 +37,7 @@ BEGIN_MESSAGE_MAP(CDlgEncryptTab, CDialogEx)
     ON_EN_CHANGE(IDC_ENCRYPT_RESULT, &CDlgEncryptTab::OnEnChangeDecryptResult)
     ON_BN_CLICKED(IDC_ENCRYPT, &CDlgEncryptTab::OnBnClickedEncrypt)
     ON_BN_CLICKED(IDC_ENCRYPT_FILE_BTN, &CDlgEncryptTab::OnBnClickedEncryptFileBtn)
+    ON_EN_CHANGE(IDC_ENCRYPT_FILE_PATH, &CDlgEncryptTab::OnEnChangeEncryptFilePath)
 END_MESSAGE_MAP()
 
 
@@ -113,6 +114,17 @@ void CDlgEncryptTab::OnEnChangeDecryptResult()
 }
 
 
+void CDlgEncryptTab::OnEnChangeEncryptFilePath()
+{
+    // TODO:  RICHEDIT 컨트롤인 경우, 이 컨트롤은
+    // CDialogEx::OnInitDialog() 함수를 재지정 
+    //하고 마스크에 OR 연산하여 설정된 ENM_CHANGE 플래그를 지정하여 CRichEditCtrl().SetEventMask()를 호출하지 않으면
+    // 이 알림 메시지를 보내지 않습니다.
+
+    // TODO:  여기에 컨트롤 알림 처리기 코드를 추가합니다.
+}
+
+
 BOOL CDlgEncryptTab::OnInitDialog()
 {
     CDialogEx::OnInitDialog();
@@ -125,11 +137,12 @@ BOOL CDlgEncryptTab::OnInitDialog()
     m_comboEncModeList.SetCurSel(0);
 
     // 패딩 콤보 박스
-    m_comboEncPadding.AddString(_T("NO_PADDING"));
+    m_comboEncPadding.AddString(_T("DEFAULT_PADDING"));
     m_comboEncPadding.AddString(_T("ZEROS_PADDING"));
     m_comboEncPadding.AddString(_T("PKCS_PADDING"));
     m_comboEncPadding.AddString(_T("ONE_AND_ZEROS_PADDING"));
-    m_comboEncPadding.AddString(_T("DEFAULT_PADDING"));
+    m_comboEncPadding.AddString(_T("W3C_PADDING"));
+    // m_comboEncPadding.AddString(_T("NO_PADDING"));
     m_comboEncPadding.SetCurSel(0);
 
 
@@ -138,6 +151,7 @@ BOOL CDlgEncryptTab::OnInitDialog()
 }
 
 
+// 암호화 동작 함수
 void CDlgEncryptTab::DoEncrypt()
 {
     // 모드, 패딩 설정 값 가져오기
@@ -145,6 +159,7 @@ void CDlgEncryptTab::DoEncrypt()
     CString modSelected;
     m_comboEncModeList.GetLBText(m_comboEncModeList.GetCurSel(), modSelected);
 
+    // 선택한 패딩
     CString padSelected;
     m_comboEncPadding.GetLBText(m_comboEncPadding.GetCurSel(), padSelected);
 
@@ -159,14 +174,13 @@ void CDlgEncryptTab::DoEncrypt()
     // ------- 암호화 동작 실행 -------- //
     // 모듈 함수 실행
     CAES_Module *tmd2 = new CAES_Module();
-
     // 리턴 있는 버전
     // result = ((new CAES_Module)->testEncyp2(str, modSelected, ((new CAES_Module)->GetPaddingSch(padSelected)))).c_str();
     // 리턴 없는 버전
-    tmd2->testEncyp<CryptoPP::AES>(str, modSelected, tmd2->GetPaddingSch(padSelected));
+    tmd2->testEncyp<CryptoPP::AES>(str, modSelected, padSelected);
 
     // 결과 받기
-    result = tmd2->strResult.c_str();
+    result = tmd2->GetEncResult().c_str();
     // -------- 암호화 종료 --------- // 
 
 
@@ -174,6 +188,14 @@ void CDlgEncryptTab::DoEncrypt()
     // 암호문 결과 출력
     CEdit *p = (CEdit *)GetDlgItem(IDC_ENCRYPT_RESULT);
     p->SetWindowText(result);
+
+
+    // 다른 대화창이라 안 되는건가?
+    CString result2;
+    result2 = tmd2->GetDecResult().c_str();
+
+    CEdit *q = (CEdit *)GetDlgItem(IDC_DECRYPT_RESULT);
+    q->SetWindowText(result2);
 
     AfxMessageBox(_T("Encrypted"));
 }

@@ -29,4 +29,9 @@ public:
     CEdit m_decryptFilePath;        // 파일 열기
     CEdit m_decryptCryptTxt;        // 암호화된 텍스트
     CEdit m_decryptResultTxt;       // 복호화된 텍스트
+    afx_msg void OnEnChangeDecryptFilePath();
+    void CDlgDecryptTab::DoDecrypt();
+    CComboBox m_comboDecModelList;
+    CComboBox m_comboDecPaddingList;
+    virtual BOOL OnInitDialog();
 };

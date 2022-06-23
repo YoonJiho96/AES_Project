@@ -30,8 +30,9 @@ public:
     CEdit m_encryptPlainTxt;        // 입력한 평문
     CEdit m_encryptResultTxt;       // 암호화 결과
     CComboBox m_comboEncModeList;
-    virtual BOOL OnInitDialog();
     CComboBox m_comboEncPadding;
+    virtual BOOL OnInitDialog();
     void CDlgEncryptTab::DoEncrypt();
     CString GetInputStr();
+    afx_msg void OnEnChangeEncryptFilePath();
 };
