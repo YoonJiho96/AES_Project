@@ -5,6 +5,8 @@
 #include "AES_Project.h"
 #include "DlgEncryptTab.h"
 #include "afxdialogex.h"
+#include "AES_ProjectDlg.h"
+#include <string.h>
 
 
 // CDlgEncryptTab 대화 상자입니다.
@@ -13,6 +15,8 @@ IMPLEMENT_DYNAMIC(CDlgEncryptTab, CDialogEx)
 
 CDlgEncryptTab::CDlgEncryptTab(CWnd* pParent /*=NULL*/)
 	: CDialogEx(CDlgEncryptTab::IDD, pParent)
+    , m_keyLengthText(_T(""))
+    , m_encryptIVText(_T(""))
 {
     SetBackgroundColor(RGB(255, 255, 255));
 }
@@ -29,6 +33,15 @@ void CDlgEncryptTab::DoDataExchange(CDataExchange* pDX)
     DDX_Control(pDX, IDC_ENCRYPT_RESULT, m_encryptResultTxt);
     DDX_Control(pDX, IDC_COMBO_ENCRYPT_MODE, m_comboEncModeList);
     DDX_Control(pDX, IDC_COMBO_ENCRYPT_PADDING, m_comboEncPadding);
+    DDX_Control(pDX, IDC_COMBO_KEYLENGTH, m_comboEncryptKeyLength);
+    DDX_Control(pDX, IDC_ENCRYPT_IV, m_encryptIV);
+
+    // 키 길이 설정에 따른 정의
+    DDX_Control(pDX, IDC_ENCRYPT_KEY, m_encryptKey);
+    DDX_Text(pDX, IDC_ENCRYPT_KEY, m_keyLengthText);
+    DDV_MaxChars(pDX, m_keyLengthText, keyLimit);
+    DDX_Text(pDX, IDC_ENCRYPT_IV, m_encryptIVText);
+	DDV_MaxChars(pDX, m_encryptIVText, 16);
 }
 
 
@@ -38,6 +51,7 @@ BEGIN_MESSAGE_MAP(CDlgEncryptTab, CDialogEx)
     ON_BN_CLICKED(IDC_ENCRYPT, &CDlgEncryptTab::OnBnClickedEncrypt)
     ON_BN_CLICKED(IDC_ENCRYPT_FILE_BTN, &CDlgEncryptTab::OnBnClickedEncryptFileBtn)
     ON_EN_CHANGE(IDC_ENCRYPT_FILE_PATH, &CDlgEncryptTab::OnEnChangeEncryptFilePath)
+    ON_CBN_SELCHANGE(IDC_COMBO_KEYLENGTH, &CDlgEncryptTab::OnCbnSelchangeComboKeylength)
 END_MESSAGE_MAP()
 
 
@@ -131,9 +145,15 @@ BOOL CDlgEncryptTab::OnInitDialog()
 
     // TODO:  여기에 추가 초기화 작업을 추가합니다.
 
+    // 키 길이
+    m_comboEncryptKeyLength.AddString(_T("16"));
+    m_comboEncryptKeyLength.AddString(_T("32"));
+    m_comboEncryptKeyLength.SetCurSel(0);
+    keyLenghtSelected = "16";
+
     // 모드 콤보 박스
-    m_comboEncModeList.AddString(_T("ECB"));
     m_comboEncModeList.AddString(_T("CBC"));
+    m_comboEncModeList.AddString(_T("ECB"));
     m_comboEncModeList.SetCurSel(0);
 
     // 패딩 콤보 박스
@@ -163,12 +183,20 @@ void CDlgEncryptTab::DoEncrypt()
     CString padSelected;
     m_comboEncPadding.GetLBText(m_comboEncPadding.GetCurSel(), padSelected);
 
+    // 키 길이, 블록 크기 설정
+
+
     // input에 입력한 문자열
     CString str;
     GetDlgItemText(IDC_PLAINTEXT, str);
 
-    //CAES_Module *tmd = new CAES_Module();
-    //tmd->Test<CryptoPP::AES>(str);
+    if (str == "")
+    {
+        AfxMessageBox(_T("Need PlainText!"));
+        return;
+    }
+
+    // 암호화 결과
     CString result;
 
     // ------- 암호화 동작 실행 -------- //
@@ -186,16 +214,59 @@ void CDlgEncryptTab::DoEncrypt()
 
     // ---------- 결과 출력 ------------- //
     // 암호문 결과 출력
-    CEdit *p = (CEdit *)GetDlgItem(IDC_ENCRYPT_RESULT);
-    p->SetWindowText(result);
+    // 방법 1
+    //CEdit *p = (CEdit *)GetDlgItem(IDC_ENCRYPT_RESULT);
+    //p->SetWindowText(result);
+    
+    // 방법 2
+    SetEncResultText(result);
 
 
-    // 다른 대화창이라 안 되는건가?
-    CString result2;
-    result2 = tmd2->GetDecResult().c_str();
-
-    CEdit *q = (CEdit *)GetDlgItem(IDC_DECRYPT_RESULT);
-    q->SetWindowText(result2);
+    // 다른 대화창에 결과 출력
+    // 다른 대화창이라 안 되는건가? 
+    //CString result2;
+    //result2 = tmd2->GetDecResult().c_str();
+    CAES_ProjectDlg *pFrame = (CAES_ProjectDlg *)AfxGetMainWnd();
+    pFrame->d_tab->SetDecEncryptedText(result);
 
     AfxMessageBox(_T("Encrypted"));
+}
+
+
+void CDlgEncryptTab::OnCbnSelchangeComboKeylength()
+{
+    // TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
+
+    // 키 길이 설정
+    m_comboEncryptKeyLength.GetLBText(m_comboEncryptKeyLength.GetCurSel(), keyLenghtSelected);
+    if (keyLenghtSelected == "16")
+    {
+        OutputDebugString(_T("16\n"));
+        keyLimit = 16;
+
+        // 입력한 키
+        CString str;
+        GetDlgItemText(IDC_ENCRYPT_KEY, str);
+
+        // 길이 제한
+        if (str.GetLength() > 16)
+        {
+            string left = string(CT2CA(str));
+            left = left.substr(0, 16);
+            str = left.c_str();
+            SetDlgItemText(IDC_ENCRYPT_KEY, str);
+        }
+    }
+    else if (keyLenghtSelected == "32")
+    {
+        OutputDebugString(_T("32\n"));
+        keyLimit = 32;
+    }
+    // DoDataExchange() 호출용
+    UpdateData();
+}
+
+void setKeyLength(CString k)
+{
+    
 }

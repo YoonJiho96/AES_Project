@@ -5,6 +5,7 @@
 #include "AES_Project.h"
 #include "DlgDecryptTab.h"
 #include "afxdialogex.h"
+#include "AES_ProjectDlg.h"
 
 
 // CDlgDecryptTab 대화 상자입니다.
@@ -29,6 +30,7 @@ void CDlgDecryptTab::DoDataExchange(CDataExchange* pDX)
     DDX_Control(pDX, IDC_DECRYPT_RESULT, m_decryptResultTxt);
     DDX_Control(pDX, IDC_COMBO_DECRYPT_MODE, m_comboDecModelList);
     DDX_Control(pDX, IDC_COMBO_DECRYPT_PADDING, m_comboDecPaddingList);
+    DDX_Control(pDX, IDC_COMBO_KEYLENGTH2, m_comboDecryptKeyLength);
 }
 
 
@@ -69,6 +71,7 @@ BOOL CDlgDecryptTab::PreTranslateMessage(MSG* pMsg)
 void CDlgDecryptTab::OnBnClickedDecrypt()
 {
     // TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
+    DoDecrypt();
 }
 
 
@@ -125,9 +128,14 @@ BOOL CDlgDecryptTab::OnInitDialog()
 
     // TODO:  여기에 추가 초기화 작업을 추가합니다.
 
+    // 키 길이 콤보 박스
+    m_comboDecryptKeyLength.AddString(_T("16"));
+    m_comboDecryptKeyLength.AddString(_T("32"));
+    m_comboDecryptKeyLength.SetCurSel(0);
+
     // 모드 콤보 박스
-    m_comboDecModelList.AddString(_T("ECB"));
     m_comboDecModelList.AddString(_T("CBC"));
+    m_comboDecModelList.AddString(_T("ECB"));
     m_comboDecModelList.SetCurSel(0);
 
     // 패딩 콤보 박스
@@ -143,18 +151,18 @@ BOOL CDlgDecryptTab::OnInitDialog()
     // 예외: OCX 속성 페이지는 FALSE를 반환해야 합니다.
 }
 
-/*
+
 // 복호화 동작 함수
 void CDlgDecryptTab::DoDecrypt()
 {
     // 모드, 패딩 설정 값 가져오기
     // 선택한 모드
     CString modSelected;
-    m_comboEncModeList.GetLBText(m_comboEncModeList.GetCurSel(), modSelected);
+    m_comboDecModelList.GetLBText(m_comboDecModelList.GetCurSel(), modSelected);
 
     // 선택한 패딩
     CString padSelected;
-    m_comboEncPadding.GetLBText(m_comboEncPadding.GetCurSel(), padSelected);
+    m_comboDecPaddingList.GetLBText(m_comboDecPaddingList.GetCurSel(), padSelected);
 
     // input에 입력한 문자열
     CString str;
@@ -170,29 +178,32 @@ void CDlgDecryptTab::DoDecrypt()
     // 리턴 있는 버전
     // result = ((new CAES_Module)->testEncyp2(str, modSelected, ((new CAES_Module)->GetPaddingSch(padSelected)))).c_str();
     // 리턴 없는 버전
-    tmd2->testEncyp<CryptoPP::AES>(str, modSelected, padSelected);
+    //tmd2->testEncyp<CryptoPP::AES>(str, modSelected, padSelected);
 
     // 결과 받기
     result = tmd2->GetEncResult().c_str();
     // -------- 암호화 종료 --------- // 
 
-
     // ---------- 결과 출력 ------------- //
-    // 암호문 결과 출력
-    CEdit *p = (CEdit *)GetDlgItem(IDC_ENCRYPT_RESULT);
-    p->SetWindowText(result);
-
-
-    // 다른 대화창이라 안 되는건가?
+    // 결과값 획득
     CString result2;
     result2 = tmd2->GetDecResult().c_str();
 
-    CEdit *q = (CEdit *)GetDlgItem(IDC_DECRYPT_RESULT);
-    q->SetWindowText(result2);
+    // 텍스트 값 출력
+    // 방법 1
+    m_decryptCryptTxt.SetWindowTextW(_T("HEHEH"));
+    
+    // 방법 2
+   // CEdit *q = (CEdit *)GetDlgItem(IDC_DECRYPT_RESULT);
+   // q->SetWindowText(result2);
+    
+    // 다른 클래스 객체 접근 방법
+    // 메인에서 생성된 다른 클래스 객체 참조
+    CAES_ProjectDlg *pFrame = (CAES_ProjectDlg*)AfxGetMainWnd();
+    pFrame->e_tab->SetEncPlainText(_T("복호에서 클릭됨"));
 
-    AfxMessageBox(_T("Encrypted"));
+    AfxMessageBox(_T("Decrypted"));
 }
 
-*/
 
 

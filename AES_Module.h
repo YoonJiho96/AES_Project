@@ -217,8 +217,8 @@ public:
         string sEnc, sDec;
 
         // 키/벡터 설정
-        byte KEY[CryptoType::DEFAULT_KEYLENGTH] = { 0, };
-        // byte KEY[CryptoType::DEFAULT_KEYLENGTH] = "abcdefg";
+        // byte KEY[CryptoType::DEFAULT_KEYLENGTH] = { 0, };
+        byte KEY[CryptoType::DEFAULT_KEYLENGTH] = "abcdefg";
         byte IV[CryptoType::BLOCKSIZE] = { 0x01, };
 
         CString strt(KEY);      // KEY - byte to CString
@@ -242,4 +242,88 @@ public:
         
         // return sEnc;
     }
+
+
+    template < class CryptoType >
+    void DoEncryptResult(CString inputStr, CString mod, CString pad)
+    {
+        // 평문 확인
+        string sText;
+        if (inputStr != "")
+            sText = string(CT2CA(inputStr));
+        else
+        {
+            AfxMessageBox(_T("Need PlainText!"));
+            return
+        }
+
+        // 결과 문자열
+        string sEnc, sDec;
+
+        // 키/벡터 설정
+        byte KEY[CryptoType::DEFAULT_KEYLENGTH] = { 0, };
+        byte IV[CryptoType::BLOCKSIZE] = { 0x01, };
+
+        CString strt(KEY);      // KEY - byte to CString
+
+        // 모드 별 동작
+        if (mod == "ECB")
+        {
+            // ECB 모드
+            // sEnc = ECB_Encrypt<CryptoType>(KEY, sText);
+            sEnc = ECB_Encrypt<CryptoType>(KEY, sText, pad);
+            sDec = ECB_Decrypt<CryptoType>(KEY, sEnc, pad);
+        }
+        else if (mod == "CBC")
+        {
+            // CBC 모드
+            sEnc = CBC_Encrypt<CryptoType>(KEY, IV, sText, pad);
+            sDec = CBC_Decrypt<CryptoType>(KEY, IV, sEnc, pad);
+        }
+
+        // strResult = sEnc.c_str();
+
+        // return sEnc;
+    }
+
+    template < class CryptoType >
+    void DoDecryptResult(CString inputStr, CString mod, CString pad)
+    {
+        // 평문 확인
+        string sText;
+        if (inputStr != "")
+            sText = string(CT2CA(inputStr));
+        else
+            sText = "Plain Text";
+
+        // 결과 문자열
+        string sEnc, sDec;
+
+        // 키/벡터 설정
+        byte KEY[CryptoType::DEFAULT_KEYLENGTH] = { 0, };
+        // byte KEY[CryptoType::DEFAULT_KEYLENGTH] = "abcdefg";
+        byte IV[CryptoType::BLOCKSIZE] = { 0x01, };
+
+        CString strt(KEY);      // KEY - byte to CString
+
+        // 모드 별 동작
+        if (mod == "ECB")
+        {
+            // ECB 모드
+            // sEnc = ECB_Encrypt<CryptoType>(KEY, sText);
+            sEnc = ECB_Encrypt<CryptoType>(KEY, sText, pad);
+            sDec = ECB_Decrypt<CryptoType>(KEY, sEnc, pad);
+        }
+        else if (mod == "CBC")
+        {
+            // CBC 모드
+            sEnc = CBC_Encrypt<CryptoType>(KEY, IV, sText, pad);
+            sDec = CBC_Decrypt<CryptoType>(KEY, IV, sEnc, pad);
+        }
+
+        // strResult = sEnc.c_str();
+
+        // return sEnc;
+    }
+
 };

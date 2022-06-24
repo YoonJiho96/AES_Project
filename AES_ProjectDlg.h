@@ -34,11 +34,11 @@ protected:
 	afx_msg HCURSOR OnQueryDragIcon();
 	DECLARE_MESSAGE_MAP()
 public:
+    CTabCtrl encrypt_tab;
     afx_msg void OnBnClickedCancel();
     afx_msg void OnBnClickedOk();
     afx_msg void OnBnClickedEncrypt();      // 암호화
     afx_msg void OnBnClickedDecrypt();      // 복호화
     afx_msg void OnEnChangePlaintext();
-    CTabCtrl encrypt_tab;
     afx_msg void OnSelchangeAestab(NMHDR *pNMHDR, LRESULT *pResult);
 };
