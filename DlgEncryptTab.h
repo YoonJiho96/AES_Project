@@ -31,23 +31,24 @@ private:
     
     // 키 설정
     CEdit m_encryptKey;             // 키 입력 칸
+    CString m_encryptKeyText;        // 키에 입력된 값
     CString keyLenghtSelected;      // 현재 선택된 키 길이
-    CString m_keyLengthText;        // 키에 입력된 값
     int keyLimit = 16;              // 기본 키 길이
     
     // IV 설정
-    CEdit m_encryptIV;
+    CEdit m_encryptIV;              // 
+    CString m_encryptIVText;        // IV에 입력된 값
 public:
     virtual BOOL OnInitDialog();
-    afx_msg void OnEnChangePlaintext();
-    afx_msg void OnEnChangeCrypttext();
     afx_msg void OnBnClickedEncrypt();
-    afx_msg void OnEnChangeDecryptResult();
     afx_msg void OnBnClickedEncryptFileBtn();
-    afx_msg void OnEnChangeEncryptFilePath();
     afx_msg void OnCbnSelchangeComboKeylength();
+    afx_msg void OnCbnSelchangeComboEncryptMode();
+
     void CDlgEncryptTab::DoEncrypt();       // 버튼 클릭 동작
     void SetEncPlainText(LPCTSTR str) { m_encryptPlainTxt.SetWindowTextW(str); }    // 평문 입력칸 값 설정
     void SetEncResultText(LPCTSTR str) { m_encryptResultTxt.SetWindowTextW(str); }  // 결과 출력칸 값 설정
-    CString m_encryptIVText;
+
+    void CheckKeyInput();       // 입력한 KEY 값 유효 확인
+    void CheckIvInput();        // 입력한 IV 값 유효 확인
 };

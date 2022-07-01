@@ -39,6 +39,5 @@ public:
     afx_msg void OnBnClickedOk();
     afx_msg void OnBnClickedEncrypt();      // 암호화
     afx_msg void OnBnClickedDecrypt();      // 복호화
-    afx_msg void OnEnChangePlaintext();
     afx_msg void OnSelchangeAestab(NMHDR *pNMHDR, LRESULT *pResult);
 };

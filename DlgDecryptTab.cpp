@@ -14,6 +14,8 @@ IMPLEMENT_DYNAMIC(CDlgDecryptTab, CDialogEx)
 
 CDlgDecryptTab::CDlgDecryptTab(CWnd* pParent /*=NULL*/)
 	: CDialogEx(CDlgDecryptTab::IDD, pParent)
+    , m_decryptKeyText(_T(""))
+    , m_decryptIVText(_T(""))
 {
     SetBackgroundColor(RGB(255, 255, 255));
 }
@@ -30,16 +32,23 @@ void CDlgDecryptTab::DoDataExchange(CDataExchange* pDX)
     DDX_Control(pDX, IDC_DECRYPT_RESULT, m_decryptResultTxt);
     DDX_Control(pDX, IDC_COMBO_DECRYPT_MODE, m_comboDecModelList);
     DDX_Control(pDX, IDC_COMBO_DECRYPT_PADDING, m_comboDecPaddingList);
+
     DDX_Control(pDX, IDC_COMBO_KEYLENGTH2, m_comboDecryptKeyLength);
+    DDX_Control(pDX, IDC_DECRYPT_KEY, m_decryptKey);
+    DDX_Text(pDX, IDC_DECRYPT_KEY, m_decryptKeyText);
+    DDV_MaxChars(pDX, m_decryptKeyText, keyLimit_dec);
+
+    DDX_Control(pDX, IDC_DECRYPT_IV, m_decryptIV);
+    DDX_Text(pDX, IDC_DECRYPT_IV, m_decryptIVText);
+	DDV_MaxChars(pDX, m_decryptIVText, 16);
 }
 
 
 BEGIN_MESSAGE_MAP(CDlgDecryptTab, CDialogEx)
     ON_BN_CLICKED(IDC_DECRYPT, &CDlgDecryptTab::OnBnClickedDecrypt)
-    ON_EN_CHANGE(IDC_PLAINTEXT2, &CDlgDecryptTab::OnEnChangePlaintext2)
-    ON_EN_CHANGE(IDC_DECRYPT_RESULT, &CDlgDecryptTab::OnEnChangeDecryptResult)
     ON_BN_CLICKED(IDC_DECRYPT_FILE_BTN, &CDlgDecryptTab::OnBnClickedDecryptFileBtn)
-    ON_EN_CHANGE(IDC_DECRYPT_FILE_PATH, &CDlgDecryptTab::OnEnChangeDecryptFilePath)
+    ON_CBN_SELCHANGE(IDC_COMBO_DECRYPT_MODE, &CDlgDecryptTab::OnCbnSelchangeComboDecryptMode)
+    ON_CBN_SELCHANGE(IDC_COMBO_KEYLENGTH2, &CDlgDecryptTab::OnCbnSelchangeComboKeylength2)
 END_MESSAGE_MAP()
 
 
@@ -89,39 +98,6 @@ void CDlgDecryptTab::OnBnClickedDecryptFileBtn()
 }
 
 
-void CDlgDecryptTab::OnEnChangePlaintext2()
-{
-    // TODO:  RICHEDIT 컨트롤인 경우, 이 컨트롤은
-    // CDialogEx::OnInitDialog() 함수를 재지정 
-    //하고 마스크에 OR 연산하여 설정된 ENM_CHANGE 플래그를 지정하여 CRichEditCtrl().SetEventMask()를 호출하지 않으면
-    // 이 알림 메시지를 보내지 않습니다.
-
-    // TODO:  여기에 컨트롤 알림 처리기 코드를 추가합니다.
-}
-
-
-void CDlgDecryptTab::OnEnChangeDecryptResult()
-{
-    // TODO:  RICHEDIT 컨트롤인 경우, 이 컨트롤은
-    // CDialogEx::OnInitDialog() 함수를 재지정 
-    //하고 마스크에 OR 연산하여 설정된 ENM_CHANGE 플래그를 지정하여 CRichEditCtrl().SetEventMask()를 호출하지 않으면
-    // 이 알림 메시지를 보내지 않습니다.
-
-    // TODO:  여기에 컨트롤 알림 처리기 코드를 추가합니다.
-}
-
-
-void CDlgDecryptTab::OnEnChangeDecryptFilePath()
-{
-    // TODO:  RICHEDIT 컨트롤인 경우, 이 컨트롤은
-    // CDialogEx::OnInitDialog() 함수를 재지정 
-    //하고 마스크에 OR 연산하여 설정된 ENM_CHANGE 플래그를 지정하여 CRichEditCtrl().SetEventMask()를 호출하지 않으면
-    // 이 알림 메시지를 보내지 않습니다.
-
-    // TODO:  여기에 컨트롤 알림 처리기 코드를 추가합니다.
-}
-
-
 BOOL CDlgDecryptTab::OnInitDialog()
 {
     CDialogEx::OnInitDialog();
@@ -166,44 +142,96 @@ void CDlgDecryptTab::DoDecrypt()
 
     // input에 입력한 문자열
     CString str;
-    GetDlgItemText(IDC_PLAINTEXT, str);
+    GetDlgItemText(IDC_PLAINTEXT2, str);
 
-    //CAES_Module *tmd = new CAES_Module();
-    //tmd->Test<CryptoPP::AES>(str);
-    CString result;
+    // 문자열 검사
+    if (str == "")
+    {
+        AfxMessageBox(_T("Need PlainText!"));
+        return;
+    }
+
+    // -------- KEY, IV 초기화 -------- //
+    CString keyInput;
+    m_decryptKey.GetWindowText(keyInput);
+    CString ivInput;
+    m_decryptIV.GetWindowText(ivInput);
+
+    // 키 값
+    byte *KEY;
+    KEY = new byte[keyInput.GetLength() + 1];
+    KEY = (byte*)(LPCTSTR)keyInput;
+
+    // IV 값
+    byte *IV;
+    IV = new byte[ivInput.GetLength() + 1];
+    IV = (byte*)(LPCTSTR)ivInput;
+
 
     // ------- 암호화 동작 실행 -------- //
     // 모듈 함수 실행
     CAES_Module *tmd2 = new CAES_Module();
-    // 리턴 있는 버전
-    // result = ((new CAES_Module)->testEncyp2(str, modSelected, ((new CAES_Module)->GetPaddingSch(padSelected)))).c_str();
-    // 리턴 없는 버전
-    //tmd2->testEncyp<CryptoPP::AES>(str, modSelected, padSelected);
-
-    // 결과 받기
-    result = tmd2->GetEncResult().c_str();
+    tmd2->DoDecryptResult<CryptoPP::AES>(str, modSelected, padSelected, KEY, IV);   // 복호화 실행
     // -------- 암호화 종료 --------- // 
 
     // ---------- 결과 출력 ------------- //
     // 결과값 획득
-    CString result2;
-    result2 = tmd2->GetDecResult().c_str();
+    CString result;
+    result = tmd2->GetDecResult().c_str();
 
-    // 텍스트 값 출력
-    // 방법 1
-    m_decryptCryptTxt.SetWindowTextW(_T("HEHEH"));
-    
-    // 방법 2
-   // CEdit *q = (CEdit *)GetDlgItem(IDC_DECRYPT_RESULT);
-   // q->SetWindowText(result2);
-    
-    // 다른 클래스 객체 접근 방법
-    // 메인에서 생성된 다른 클래스 객체 참조
-    CAES_ProjectDlg *pFrame = (CAES_ProjectDlg*)AfxGetMainWnd();
-    pFrame->e_tab->SetEncPlainText(_T("복호에서 클릭됨"));
+    SetDecResultText(result);    // 텍스트 값 출력
 
     AfxMessageBox(_T("Decrypted"));
 }
 
 
+void CDlgDecryptTab::OnCbnSelchangeComboDecryptMode()
+{
+    // ECB 모드에서 IV 값 미사용으로 비활성.
+    // 선택한 모드
+    CString modSelected;
+    m_comboDecModelList.GetLBText(m_comboDecModelList.GetCurSel(), modSelected);
 
+    if (modSelected == "ECB")
+    {
+        m_decryptIV.EnableWindow(false);
+    }
+    else
+    {
+        m_decryptIV.EnableWindow(true);
+    }
+}
+
+
+void CDlgDecryptTab::OnCbnSelchangeComboKeylength2()
+{
+    // TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
+
+    // 키 길이 설정
+    m_comboDecryptKeyLength.GetLBText(m_comboDecryptKeyLength.GetCurSel(), keyLengthSelected_dec);
+    if (keyLengthSelected_dec == "16")
+    {
+        OutputDebugString(_T("16\n"));
+        keyLimit_dec = 16;
+
+        // 입력한 키
+        CString str;
+        GetDlgItemText(IDC_ENCRYPT_KEY, str);
+
+        // 길이 제한
+        if (str.GetLength() > 16)
+        {
+            string left = string(CT2CA(str));
+            left = left.substr(0, 16);
+            str = left.c_str();
+            SetDlgItemText(IDC_ENCRYPT_KEY, str);
+        }
+    }
+    else if (keyLengthSelected_dec == "32")
+    {
+        OutputDebugString(_T("32\n"));
+        keyLimit_dec = 32;
+    }
+    // DoDataExchange() 호출용
+    UpdateData();
+}
