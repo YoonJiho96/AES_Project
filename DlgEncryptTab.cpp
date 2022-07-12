@@ -195,9 +195,6 @@ void CDlgEncryptTab::DoEncrypt()
     // ------- 암호화 동작 실행 -------- //
     // 모듈 함수 실행
     CAES_Module *tmd2 = new CAES_Module();
-    // 테스트
-    // result = ((new CAES_Module)->testEncyp2(str, modSelected, ((new CAES_Module)->GetPaddingSch(padSelected)))).c_str();   // 리턴 있는 버전
-    // tmd2->testEncyp<CryptoPP::AES>(str, modSelected, padSelected, KEY, IV);    // 리턴 없는 버전
 
     // 암호화 실행
     tmd2->DoEncryptResult<CryptoPP::AES>(str, modSelected, padSelected, KEY, IV);
