@@ -129,7 +129,7 @@ BOOL CDlgDecryptTab::OnInitDialog()
 
 
 // 복호화 동작 함수
-void CDlgDecryptTab::DoDecrypt()
+void CDlgDecryptTab::DoDecrypt_back()
 {
     // 모드, 패딩 설정 값 가져오기
     // 선택한 모드
@@ -171,19 +171,51 @@ void CDlgDecryptTab::DoDecrypt()
     // ------- 암호화 동작 실행 -------- //
     // 모듈 함수 실행
     CAES_Module *tmd2 = new CAES_Module();
-    tmd2->DoDecryptResult<CryptoPP::AES>(str, modSelected, padSelected, KEY, IV);   // 복호화 실행
+    // tmd2->DoDecryptResult<CryptoPP::AES>(str, modSelected, padSelected, KEY, IV);   // 복호화 실행
     // -------- 암호화 종료 --------- // 
+
+    // 파일의 경우
+    CString fileName;
+    GetDlgItemText(IDC_DECRYPT_FILE_PATH, fileName);
+    tmd2->DoDecryptResult<CryptoPP::AES>(fileName, modSelected, padSelected, KEY, IV, TRUE);
+
 
     // ---------- 결과 출력 ------------- //
     // 결과값 획득
     CString result;
     result = tmd2->GetDecResult().c_str();
-
     SetDecResultText(result);    // 텍스트 값 출력
 
+    // 파일 결과 출력
+    WriteDecryptFile(result);
+
+    if (result == "")
+        return;
     AfxMessageBox(_T("Decrypted"));
 }
 
+void CDlgDecryptTab::DoDecrypt()
+{
+    CString str;
+    GetDlgItemText(IDC_PLAINTEXT2, str);
+
+    CString fileName;
+    GetDlgItemText(IDC_DECRYPT_FILE_PATH, fileName);
+
+    if (str != "")
+    {
+        DoDecryptText();
+    }
+    else if (fileName != "")
+    {
+        DoDecryptFile();
+    }
+    else
+    {
+        AfxMessageBox(_T("Check Input"));
+        return;
+    }
+}
 
 void CDlgDecryptTab::OnCbnSelchangeComboDecryptMode()
 {
@@ -234,4 +266,138 @@ void CDlgDecryptTab::OnCbnSelchangeComboKeylength2()
     }
     // DoDataExchange() 호출용
     UpdateData();
+}
+
+void CDlgDecryptTab::DoDecryptFile()
+{
+    // 모드, 패딩 설정 값 가져오기
+    // 선택한 모드
+    CString modSelected;
+    m_comboDecModelList.GetLBText(m_comboDecModelList.GetCurSel(), modSelected);
+
+    // 선택한 패딩
+    CString padSelected;
+    m_comboDecPaddingList.GetLBText(m_comboDecPaddingList.GetCurSel(), padSelected);
+
+    // 불러온 파일
+    CString fileName;
+    GetDlgItemText(IDC_DECRYPT_FILE_PATH, fileName);
+
+    // 문자열 검사
+    if (fileName == "")
+    {
+        AfxMessageBox(_T("Need File!"));
+        return;
+    }
+
+    // -------- KEY, IV 초기화 -------- //
+    CString keyInput;
+    m_decryptKey.GetWindowText(keyInput);
+    CString ivInput;
+    m_decryptIV.GetWindowText(ivInput);
+
+    // 키 값
+    byte *KEY;
+    KEY = new byte[keyInput.GetLength() + 1];
+    KEY = (byte*)(LPCTSTR)keyInput;
+
+    // IV 값
+    byte *IV;
+    IV = new byte[ivInput.GetLength() + 1];
+    IV = (byte*)(LPCTSTR)ivInput;
+
+
+    // ------- 암호화 동작 실행 -------- //
+    // 모듈 함수 실행
+    CAES_Module *tmd2 = new CAES_Module();
+    tmd2->DoDecryptResult<CryptoPP::AES>(fileName, modSelected, padSelected, KEY, IV, FALSE);
+    // -------- 암호화 종료 --------- // 
+
+
+    // ---------- 결과 출력 ------------- //
+    // 결과값 획득
+    CString result;
+    result = tmd2->GetDecResult().c_str();
+    WriteDecryptFile(result);
+
+    if (result == "")
+        return;
+    AfxMessageBox(_T("Decrypted"));
+}
+
+void CDlgDecryptTab::DoDecryptText()
+{
+    // 모드, 패딩 설정 값 가져오기
+    // 선택한 모드
+    CString modSelected;
+    m_comboDecModelList.GetLBText(m_comboDecModelList.GetCurSel(), modSelected);
+
+    // 선택한 패딩
+    CString padSelected;
+    m_comboDecPaddingList.GetLBText(m_comboDecPaddingList.GetCurSel(), padSelected);
+
+    // input에 입력한 문자열
+    CString str;
+    GetDlgItemText(IDC_PLAINTEXT2, str);
+
+    // 문자열 검사
+    if (str == "")
+    {
+        AfxMessageBox(_T("Need PlainText!"));
+        return;
+    }
+
+    // -------- KEY, IV 초기화 -------- //
+    CString keyInput;
+    m_decryptKey.GetWindowText(keyInput);
+    CString ivInput;
+    m_decryptIV.GetWindowText(ivInput);
+
+    // 키 값
+    byte *KEY;
+    KEY = new byte[keyInput.GetLength() + 1];
+    KEY = (byte*)(LPCTSTR)keyInput;
+
+    // IV 값
+    byte *IV;
+    IV = new byte[ivInput.GetLength() + 1];
+    IV = (byte*)(LPCTSTR)ivInput;
+
+    // ------- 암호화 동작 실행 -------- //
+    // 모듈 함수 실행
+    CAES_Module *tmd2 = new CAES_Module();
+    tmd2->DoDecryptResult<CryptoPP::AES>(str, modSelected, padSelected, KEY, IV, TRUE);   // 복호화 실행
+    // -------- 암호화 종료 --------- // 
+
+
+    // ---------- 결과 출력 ------------- //
+    // 결과값 획득
+    CString result;
+    result = tmd2->GetDecResult().c_str();
+    SetDecResultText(result);    // 텍스트 값 출력
+
+    if (result == "")
+        return;
+    AfxMessageBox(_T("Decrypted"));
+}
+
+void CDlgDecryptTab::WriteDecryptFile(CString result)
+{
+    // 파일 출력
+    CFileDialog DLG(FALSE, L"jpg", L"*.jpg", OFN_OVERWRITEPROMPT, L"Image File(*.jpg)|*.jpg||", this);
+    TCHAR szPath[MAX_PATH] = L"";
+    GetCurrentDirectory(MAX_PATH, szPath);
+    PathRemoveFileSpec(szPath);
+    lstrcat(szPath, L"\\Data");
+    DLG.m_ofn.lpstrInitialDir = szPath;
+    CString fname;
+    CFile file;
+    if (DLG.DoModal())
+    {
+        fname = DLG.GetPathName();
+
+        file.Open(fname, CFile::modeCreate | CFile::modeReadWrite);
+        file.Write(result, result.GetLength() * 2);
+        file.Close();
+    }
 }

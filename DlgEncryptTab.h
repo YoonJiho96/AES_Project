@@ -46,9 +46,14 @@ public:
     afx_msg void OnCbnSelchangeComboEncryptMode();
 
     void CDlgEncryptTab::DoEncrypt();       // 버튼 클릭 동작
+    void CDlgEncryptTab::DoEncrypt_back();
     void SetEncPlainText(LPCTSTR str) { m_encryptPlainTxt.SetWindowTextW(str); }    // 평문 입력칸 값 설정
     void SetEncResultText(LPCTSTR str) { m_encryptResultTxt.SetWindowTextW(str); }  // 결과 출력칸 값 설정
 
     void CheckKeyInput();       // 입력한 KEY 값 유효 확인
     void CheckIvInput();        // 입력한 IV 값 유효 확인
+
+    void CDlgEncryptTab::DoEncryptText();
+    void CDlgEncryptTab::DoEncryptFile();
+    void CDlgEncryptTab::WriteEncryptFile(CString result);
 };

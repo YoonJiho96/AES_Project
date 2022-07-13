@@ -44,6 +44,11 @@ public:
     afx_msg void OnCbnSelchangeComboKeylength2();
 
     void CDlgDecryptTab::DoDecrypt();
+    void CDlgDecryptTab::DoDecrypt_back();
     void SetDecEncryptedText(LPCTSTR str) { m_decryptCryptTxt.SetWindowTextW(str); }
     void SetDecResultText(LPCTSTR str) { m_decryptResultTxt.SetWindowTextW(str); }
+
+    void CDlgDecryptTab::DoDecryptFile();
+    void CDlgDecryptTab::DoDecryptText();
+    void CDlgDecryptTab::WriteDecryptFile(CString result);
 };

@@ -91,6 +91,43 @@ public:
         strResult = *EncodedText;
     }
 
+    // ----- 암호화 템플릿 ----- //
+    template <class TyMode>
+    void EncryptFileTest(TyMode &Encryptor, const string &PlainText, CString pad, BOOL IsText)
+    {
+        OutputDebugString(_T("암호화\n"));
+
+        // DLL 내에서 해제되도록 설정
+        string *EncodedText = new string();
+
+        try
+        {
+            // 패딩 타입 불러오기
+            CryptoPP::BlockPaddingSchemeDef::BlockPaddingScheme paddingType = GetPaddingSch(pad);
+
+            // 모듈 개별 생성으로 변경
+            CryptoPP::StringSink *strSnk = new CryptoPP::StringSink(*EncodedText);
+            CryptoPP::Base64Encoder *bs = new CryptoPP::Base64Encoder(strSnk, false);
+            CryptoPP::StreamTransformationFilter *stf = new CryptoPP::StreamTransformationFilter(Encryptor, bs, paddingType);
+
+            if (IsText)
+                CryptoPP::StringSource strSrc = new CryptoPP::StringSource(PlainText, true, stf);
+            else
+                CryptoPP::FileSource fSrc = new CryptoPP::FileSource(PlainText.c_str(), true, stf);
+        }
+        catch (...)
+        {
+            OutputDebugString(_T("Encrypt Error\n"));
+        }
+
+        // 출력 후 스택 오버런 오류 발생.
+        //char buff1[100];
+        //sprintf(buff1, "암호 결과 : %s\n", *EncodedText);
+        ///OutputDebugStringA(buff1);
+
+        strResult = *EncodedText;
+    }
+
     // ----- 복호화 템플릿 ------ //
     template <class TyMode>
     void Decrypt(TyMode &Decryptor, const string &EncodedText, CString pad)
@@ -110,7 +147,8 @@ public:
         {
             OutputDebugString(_T("Decrypt Error\n"));
             // 키, IV 등의 정보가 정확하지 않아 복호에 오류가 있을 경우 처리.
-            AfxMessageBox(_T("Decryption Error\nCheck Inputs"));
+            AfxMessageBox(_T("Decryption Error\n\nCheck Inputs"));
+            return;
         }
 
         // char buff_dec[100];
@@ -120,48 +158,81 @@ public:
         strDecResult = *recoveredText;
     }
 
+    // ----- 복호화 템플릿 ------ //
+    template <class TyMode>
+    void DecryptFileTest(TyMode &Decryptor, const string &EncodedText, CString pad, BOOL IsText)
+    {
+        OutputDebugString(_T("복호화\n"));
+
+        string *recoveredText = new string();
+        try
+        {
+            CryptoPP::BlockPaddingSchemeDef::BlockPaddingScheme paddingType = GetPaddingSch(pad);
+            CryptoPP::StringSink *strSnk = new CryptoPP::StringSink(*recoveredText);
+            CryptoPP::StreamTransformationFilter *stmFmt = new CryptoPP::StreamTransformationFilter(Decryptor, strSnk, paddingType);
+            CryptoPP::Base64Decoder *b64Dec = new CryptoPP::Base64Decoder(stmFmt);
+
+            if (IsText)
+                CryptoPP::StringSource strSrc = new CryptoPP::StringSource(EncodedText, true, b64Dec);
+            else
+                CryptoPP::FileSource fSrc = new CryptoPP::FileSource(EncodedText.c_str(), true, b64Dec);
+        }
+        catch (...)
+        {
+            OutputDebugString(_T("Decrypt Error\n"));
+            // 키, IV 등의 정보가 정확하지 않아 복호에 오류가 있을 경우 처리.
+            AfxMessageBox(_T("Decryption Error\n\nCheck Inputs"));
+            return;
+        }
+        strDecResult = *recoveredText;
+    }
+
     // ------- CBC 모드 -------- //
     // CBC 모드 암호화
     template <class Ty>
-    void CBC_Encrypt(byte *KEY, byte *IV, const string &PlainText, CString pad)
+    void CBC_Encrypt(byte *KEY, byte *IV, const string &PlainText, CString pad, BOOL IsText)
     {
         OutputDebugString(_T("CBC_Encrypt Start\n"));
 
         typename CryptoPP::CBC_Mode<Ty>::Encryption Encryptor;
         Encryptor.SetKeyWithIV(KEY, Ty::DEFAULT_KEYLENGTH, IV);
-        Encrypt(Encryptor, PlainText, pad);
+        // Encrypt(Encryptor, PlainText, pad);
+        EncryptFileTest(Encryptor, PlainText, pad, IsText);
     }
 
     // CBC 모드 복호화
     template <class Ty>
-    void CBC_Decrypt(byte *KEY, byte *IV, const std::string &PlainText, CString pad)
+    void CBC_Decrypt(byte *KEY, byte *IV, const std::string &PlainText, CString pad, BOOL IsText)
     {
         OutputDebugString(_T("CBC_Decrypt Start\n"));
         
         typename CryptoPP::CBC_Mode<Ty>::Decryption Decryptor(KEY, Ty::DEFAULT_KEYLENGTH, IV);
-        Decrypt(Decryptor, PlainText, pad);
+        // Decrypt(Decryptor, PlainText, pad);
+        DecryptFileTest(Decryptor, PlainText, pad, IsText);
     }
 
 
     // ------- ECB 모드 --------- //
     // ECB 모드 암호화
     template <class Ty>
-    void ECB_Encrypt(byte *KEY, const std::string &PlainText, CString pad)
+    void ECB_Encrypt(byte *KEY, const std::string &PlainText, CString pad, BOOL IsText)
     {
         OutputDebugString(_T("ECB_Encrypt Start\n"));
 
         typename CryptoPP::ECB_Mode<Ty>::Encryption Encryptor(KEY, Ty::DEFAULT_KEYLENGTH);
-        Encrypt(Encryptor, PlainText, pad);
+        // Encrypt(Encryptor, PlainText, pad);
+        EncryptFileTest(Encryptor, PlainText, pad, IsText);
     }
 
     // ECB 모드 복호화
     template <class Ty>
-    void ECB_Decrypt(byte *KEY, const std::string &PlainText, CString pad)
+    void ECB_Decrypt(byte *KEY, const std::string &PlainText, CString pad, BOOL IsText)
     {
         OutputDebugString(_T("ECB_Decrypt Start\n"));
 
         typename CryptoPP::ECB_Mode<Ty>::Decryption Decryptor(KEY, Ty::DEFAULT_KEYLENGTH);
-        Decrypt(Decryptor, PlainText, pad);
+        // Decrypt(Decryptor, PlainText, pad);
+        DecryptFileTest(Decryptor, PlainText, pad, IsText);
     }
 
 
@@ -184,7 +255,7 @@ public:
 
     // ------- 암호화 실행 ------- //
     template < class CryptoType >
-    void DoEncryptResult(CString inputStr, CString mod, CString pad, byte *KEY, byte *IV)
+    void DoEncryptResult(CString inputStr, CString mod, CString pad, byte *KEY, byte *IV, BOOL IsText)
     {
         // 평문 확인
         string sText;
@@ -202,18 +273,18 @@ public:
         if (mod == "ECB")
         {
             // ECB 모드
-            ECB_Encrypt<CryptoType>(KEY, sText, pad);
+            ECB_Encrypt<CryptoType>(KEY, sText, pad, IsText);
         }
         else if (mod == "CBC")
         {
             // CBC 모드
-            CBC_Encrypt<CryptoType>(KEY, IV, sText, pad);
+            CBC_Encrypt<CryptoType>(KEY, IV, sText, pad, IsText);
         }
     }
 
     // ------- 복호화 실행 ------- //
     template < class CryptoType >
-    void DoDecryptResult(CString inputStr, CString mod, CString pad, byte *KEY, byte *IV)
+    void DoDecryptResult(CString inputStr, CString mod, CString pad, byte *KEY, byte *IV, BOOL IsText)
     {
         // 평문 확인
         string sText;
@@ -229,12 +300,12 @@ public:
         if (mod == "ECB")
         {
             // ECB 모드
-            ECB_Decrypt<CryptoType>(KEY, sText, pad);
+            ECB_Decrypt<CryptoType>(KEY, sText, pad, IsText);
         }
         else if (mod == "CBC")
         {
             // CBC 모드
-            CBC_Decrypt<CryptoType>(KEY, IV, sText, pad);
+            CBC_Decrypt<CryptoType>(KEY, IV, sText, pad, IsText);
         }
     }
 };

@@ -8,7 +8,6 @@
 #include "AES_ProjectDlg.h"
 #include <string.h>
 
-
 // CDlgEncryptTab 대화 상자입니다.
 
 IMPLEMENT_DYNAMIC(CDlgEncryptTab, CDialogEx)
@@ -137,7 +136,7 @@ BOOL CDlgEncryptTab::OnInitDialog()
 
 
 // 암호화 동작 함수
-void CDlgEncryptTab::DoEncrypt()
+void CDlgEncryptTab::DoEncrypt_back()
 {
     // ------ 모드, 패딩 설정 값 가져오기 ------ //
     // 선택한 모드
@@ -197,16 +196,18 @@ void CDlgEncryptTab::DoEncrypt()
     CAES_Module *tmd2 = new CAES_Module();
 
     // 암호화 실행
-    tmd2->DoEncryptResult<CryptoPP::AES>(str, modSelected, padSelected, KEY, IV);
+    // tmd2->DoEncryptResult<CryptoPP::AES>(str, modSelected, padSelected, KEY, IV);
     // -------- 암호화 종료 --------- // 
 
+    // 파일의 경우
+    CString fileName;
+    GetDlgItemText(IDC_ENCRYPT_FILE_PATH, fileName);
+    tmd2->DoEncryptResult<CryptoPP::AES>(fileName, modSelected, padSelected, KEY, IV, TRUE);
 
     // 결과 받기
     result = tmd2->GetEncResult().c_str();
 
-
     // ---------- 결과 출력 ------------- //
-    // 암호문 결과 출력
     // 방법 1
     //CEdit *p = (CEdit *)GetDlgItem(IDC_ENCRYPT_RESULT);
     //p->SetWindowText(result);
@@ -215,6 +216,8 @@ void CDlgEncryptTab::DoEncrypt()
     SetEncResultText(result);
     // --------- 출력 종료 -------------- //
 
+    // 파일일 경우 출력
+    WriteEncryptFile(result);
 
     // ------ 복호탭에 결과 출력 -------- //
     // 메인 프레임 접근 -> 거기서 정의된 탭을 통해 다른 창 접근
@@ -224,6 +227,29 @@ void CDlgEncryptTab::DoEncrypt()
     AfxMessageBox(_T("Encrypted"));
 }
 
+void CDlgEncryptTab::DoEncrypt()
+{
+    // 파일/텍스트에 따라 실행
+    CString fileName;
+    GetDlgItemText(IDC_ENCRYPT_FILE_PATH, fileName);
+
+    CString str;
+    GetDlgItemText(IDC_PLAINTEXT, str);
+
+    if (str != "")
+    {
+        DoEncryptText();
+    }
+    else if (fileName != "")
+    {
+        DoEncryptFile();
+    }
+    else
+    {
+        AfxMessageBox(_T("Check Input"));
+        return;
+    }
+}
 
 // 키 입력시 동작
 void CDlgEncryptTab::OnCbnSelchangeComboKeylength()
@@ -273,5 +299,147 @@ void CDlgEncryptTab::OnCbnSelchangeComboEncryptMode()
     else
     {
         m_encryptIV.EnableWindow(true);
+    }
+}
+
+void CDlgEncryptTab::DoEncryptFile()
+{
+    // ------ 모드, 패딩 설정 값 가져오기 ------ //
+    // 선택한 모드
+    CString modSelected;
+    m_comboEncModeList.GetLBText(m_comboEncModeList.GetCurSel(), modSelected);
+
+    // 선택한 패딩
+    CString padSelected;
+    m_comboEncPadding.GetLBText(m_comboEncPadding.GetCurSel(), padSelected);
+
+    // ------- Plain Text 초기화 ------ //
+    CString fileName;
+    GetDlgItemText(IDC_ENCRYPT_FILE_PATH, fileName);
+
+    // 파일 검사
+    if (fileName == "")
+    {
+        AfxMessageBox(_T("Need PlainText!"));
+        return;
+    }
+
+    // -------- KEY, IV 초기화 -------- //
+    CString keyInput;
+    m_encryptKey.GetWindowText(keyInput);
+    CString ivInput;
+    m_encryptIV.GetWindowText(ivInput);
+
+    // 키 값
+    byte *KEY;
+    KEY = new byte[keyInput.GetLength() + 1];
+    KEY = (byte*)(LPCTSTR)keyInput;
+
+    // IV 값
+    byte *IV;
+    IV = new byte[ivInput.GetLength() + 1];
+    IV = (byte*)(LPCTSTR)ivInput;
+
+    // 암호화 결과
+    CString result;
+
+    // ------- 암호화 동작 실행 -------- //
+    // 모듈 함수 실행
+    CAES_Module *tmd2 = new CAES_Module();
+    tmd2->DoEncryptResult<CryptoPP::AES>(fileName, modSelected, padSelected, KEY, IV, FALSE);
+    // -------- 암호화 종료 --------- // 
+
+    // 결과 받기
+    result = tmd2->GetEncResult().c_str();
+    SetEncResultText(result);
+    // --------- 출력 종료 -------------- //
+
+    // 파일일 경우 출력
+    WriteEncryptFile(result);
+
+    AfxMessageBox(_T("Encrypted"));
+}
+
+void CDlgEncryptTab::DoEncryptText()
+{
+    // ------ 모드, 패딩 설정 값 가져오기 ------ //
+    // 선택한 모드
+    CString modSelected;
+    m_comboEncModeList.GetLBText(m_comboEncModeList.GetCurSel(), modSelected);
+
+    // 선택한 패딩
+    CString padSelected;
+    m_comboEncPadding.GetLBText(m_comboEncPadding.GetCurSel(), padSelected);
+
+    // ------- Plain Text 초기화 ------ //
+    // input에 입력한 문자열
+    CString str;
+    GetDlgItemText(IDC_PLAINTEXT, str);
+
+    // 문자열 검사
+    if (str == "")
+    {
+        AfxMessageBox(_T("Need PlainText!"));
+        return;
+    }
+
+    // -------- KEY, IV 초기화 -------- //
+    CString keyInput;
+    m_encryptKey.GetWindowText(keyInput);
+    CString ivInput;
+    m_encryptIV.GetWindowText(ivInput);
+
+    // 키 값
+    byte *KEY;
+    KEY = new byte[keyInput.GetLength() + 1];
+    KEY = (byte*)(LPCTSTR)keyInput;
+
+    // IV 값
+    byte *IV;
+    IV = new byte[ivInput.GetLength() + 1];
+    IV = (byte*)(LPCTSTR)ivInput;
+
+    // 암호화 결과
+    CString result;
+
+    // ------- 암호화 동작 실행 -------- //
+    // 모듈 함수 실행
+    CAES_Module *tmd2 = new CAES_Module();
+    tmd2->DoEncryptResult<CryptoPP::AES>(str, modSelected, padSelected, KEY, IV, TRUE);
+    // -------- 암호화 종료 --------- // 
+
+    // 결과 받기
+    result = tmd2->GetEncResult().c_str();
+
+    // ---------- 결과 출력 ------------- //
+    // 방법 2
+    SetEncResultText(result);
+    // --------- 출력 종료 -------------- //
+
+    // ------ 복호탭에 결과 출력 -------- //
+    // 메인 프레임 접근 -> 거기서 정의된 탭을 통해 다른 창 접근
+    CAES_ProjectDlg *pFrame = (CAES_ProjectDlg *)AfxGetMainWnd();
+    pFrame->d_tab->SetDecEncryptedText(result);
+
+    AfxMessageBox(_T("Encrypted"));
+}
+
+void CDlgEncryptTab::WriteEncryptFile(CString result)
+{
+    CFileDialog DLG(FALSE, L"jpg", L"*.jpg", OFN_OVERWRITEPROMPT, L"Image File(*.jpg)|*.jpg||", this);
+    TCHAR szPath[MAX_PATH] = L"";
+    GetCurrentDirectory(MAX_PATH, szPath);
+    PathRemoveFileSpec(szPath);
+    lstrcat(szPath, L"\\Data");
+    DLG.m_ofn.lpstrInitialDir = szPath;
+    CString fname;
+    CFile file;
+    if (DLG.DoModal())
+    {
+        fname = DLG.GetPathName();
+
+        file.Open(fname, CFile::modeCreate | CFile::modeReadWrite);
+        file.Write(result, result.GetLength() * 2);
+        file.Close();
     }
 }
