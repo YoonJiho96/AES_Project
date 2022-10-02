@@ -86,9 +86,8 @@ void CDlgDecryptTab::OnBnClickedDecrypt()
 
 void CDlgDecryptTab::OnBnClickedDecryptFileBtn()
 {
-    // TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
-    // TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
-    TCHAR szFilter[] = _T("Image (*.BMP, *.GIF, *.JPG) | *.BMP;*.GIF;*.JPG | All Files(*.*)|*.*||");
+    // TCHAR szFilter[] = _T("Image (*.BMP, *.GIF, *.JPG)|*.BMP;*.GIF;*.JPG|All Files(*.*)|*.*||");
+    TCHAR szFilter[] = _T("All Files(*.*)|*.*|Image (*.BMP, *.GIF, *.JPG)|*.BMP;*.GIF;*.JPG||");
     CFileDialog dlg(TRUE, NULL, NULL, OFN_HIDEREADONLY, szFilter);
     if (IDOK == dlg.DoModal())
     {
@@ -127,7 +126,7 @@ BOOL CDlgDecryptTab::OnInitDialog()
     // 예외: OCX 속성 페이지는 FALSE를 반환해야 합니다.
 }
 
-
+/*
 // 복호화 동작 함수
 void CDlgDecryptTab::DoDecrypt_back()
 {
@@ -186,13 +185,15 @@ void CDlgDecryptTab::DoDecrypt_back()
     result = tmd2->GetDecResult().c_str();
     SetDecResultText(result);    // 텍스트 값 출력
 
+    if (result == "")
+        return;
+
     // 파일 결과 출력
     WriteDecryptFile(result);
 
-    if (result == "")
-        return;
     AfxMessageBox(_T("Decrypted"));
 }
+*/
 
 void CDlgDecryptTab::DoDecrypt()
 {
@@ -318,10 +319,11 @@ void CDlgDecryptTab::DoDecryptFile()
     // 결과값 획득
     CString result;
     result = tmd2->GetDecResult().c_str();
-    WriteDecryptFile(result);
 
     if (result == "")
         return;
+
+    WriteDecryptFile(result);
     AfxMessageBox(_T("Decrypted"));
 }
 
@@ -384,7 +386,9 @@ void CDlgDecryptTab::DoDecryptText()
 void CDlgDecryptTab::WriteDecryptFile(CString result)
 {
     // 파일 출력
-    CFileDialog DLG(FALSE, L"jpg", L"*.jpg", OFN_OVERWRITEPROMPT, L"Image File(*.jpg)|*.jpg||", this);
+    // CFileDialog DLG(FALSE, L"jpg", L"*.jpg", OFN_OVERWRITEPROMPT, L"Image File(*.jpg)|*.jpg||", this);
+    TCHAR szFilter[] = _T("All Files(*.*)|*.*|Image(*.bmp, *.png, *.jpg)|*.bmp;*.png;*.jpg||");
+    CFileDialog DLG(FALSE, NULL, NULL, OFN_OVERWRITEPROMPT, szFilter, this);
     TCHAR szPath[MAX_PATH] = L"";
     GetCurrentDirectory(MAX_PATH, szPath);
     PathRemoveFileSpec(szPath);

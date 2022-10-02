@@ -7,6 +7,7 @@
 #include "afxdialogex.h"
 #include "AES_ProjectDlg.h"
 #include <string.h>
+#include "GetEncoding.h"
 
 // CDlgEncryptTab 대화 상자입니다.
 
@@ -80,7 +81,8 @@ BOOL CDlgEncryptTab::PreTranslateMessage(MSG* pMsg)
 void CDlgEncryptTab::OnBnClickedEncryptFileBtn()
 {
     // 파일 열기 다이얼로그
-    TCHAR szFilter[] = _T("Image (*.BMP, *.GIF, *.JPG) | *.BMP;*.GIF;*.JPG | All Files(*.*)|*.*||");
+    // TCHAR szFilter[] = _T("Image (*.BMP, *.GIF, *.JPG)|*.BMP;*.GIF;*.JPG|All Files(*.*)|*.*||");
+    TCHAR szFilter[] = _T("All Files(*.*)|*.*|Image (*.BMP, *.GIF, *.JPG)|*.BMP;*.GIF;*.JPG||");
     CFileDialog dlg(TRUE, NULL, NULL, OFN_HIDEREADONLY, szFilter);
     if (IDOK == dlg.DoModal()) 
     {
@@ -242,6 +244,10 @@ void CDlgEncryptTab::DoEncrypt()
     }
     else if (fileName != "")
     {
+        CGetEncoding *tm = new CGetEncoding;
+        CGetEncoding::CHARACTER_ENCODING t = tm->get_text_file_encoding(LPSTR(LPCTSTR(fileName)));
+        if (t == 0)
+            AfxMessageBox(_T("ANSI"));
         DoEncryptFile();
     }
     else
@@ -354,6 +360,9 @@ void CDlgEncryptTab::DoEncryptFile()
     SetEncResultText(result);
     // --------- 출력 종료 -------------- //
 
+    if (result == "")
+        return;
+
     // 파일일 경우 출력
     WriteEncryptFile(result);
 
@@ -426,7 +435,9 @@ void CDlgEncryptTab::DoEncryptText()
 
 void CDlgEncryptTab::WriteEncryptFile(CString result)
 {
-    CFileDialog DLG(FALSE, L"jpg", L"*.jpg", OFN_OVERWRITEPROMPT, L"Image File(*.jpg)|*.jpg||", this);
+    // CFileDialog DLG(FALSE, L"jpg", L"*.jpg", OFN_OVERWRITEPROMPT, L"Image File(*.jpg)|*.jpg||", this);
+    TCHAR szFilter[] = _T("All Files(*.*)|*.*|Image(*.bmp, *.png, *.jpg)|*.bmp;*.png;*.jpg||");
+    CFileDialog DLG(FALSE, NULL, NULL, OFN_OVERWRITEPROMPT, szFilter, this);
     TCHAR szPath[MAX_PATH] = L"";
     GetCurrentDirectory(MAX_PATH, szPath);
     PathRemoveFileSpec(szPath);
